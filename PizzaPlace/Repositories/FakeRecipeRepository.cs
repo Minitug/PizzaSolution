@@ -52,4 +52,10 @@ public class FakeRecipeRepository : FakeDatabase<PizzaRecipeDto>, IRecipeReposit
             ], 10),
         ];
     }
+
+    public Task UpdateRecipe(PizzaRecipeDto recipe)
+    {
+        Update(recipe, recipe.Id);
+        return Task.CompletedTask;
+    }
 }
