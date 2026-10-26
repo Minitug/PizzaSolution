@@ -1,6 +1,7 @@
 ﻿using PizzaPlace.Models;
 using PizzaPlace.Models.Types;
 using PizzaPlace.Repositories;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PizzaPlace.Services;
 
@@ -14,39 +15,32 @@ public class StockService(IStockRepository stockRepository) : IStockService
         {
             PizzaRecipeDto? recipe = recipeDtos.FirstOrDefault(
                 r => r.RecipeType == pizza.PizzaType);
-            if (recipe != null)
+            if (recipe == null)
             {
-                foreach (StockDto ingredient in recipe.Ingredients)
+                return true;
+            }
+            foreach (StockDto ingredient in recipe.Ingredients)
+            {
+                int requiredAmount = ingredient.Amount * pizza.Amount;
+                bool ingredientIsAdded = (requiredIngredients.Any(item => item.StockType == ingredient.StockType));
+                if (!ingredientIsAdded)
                 {
-                    int requiredAmount = ingredient.Amount * pizza.Amount;
-                    bool ingredientIsAdded = (requiredIngredients.Any(item => item.StockType == ingredient.StockType));
-                    if (!ingredientIsAdded)
-                    {
-                        requiredIngredients.Add(new StockDto(ingredient.StockType, requiredAmount));
-                    }
-                    else
-                    {
-                        StockDto? existingIngredient = requiredIngredients.FirstOrDefault(
-                            item => item.StockType == ingredient.StockType);
+                    requiredIngredients.Add(new StockDto(ingredient.StockType, requiredAmount));
+                }
+                else
+                {
+                    StockDto? existingIngredient = requiredIngredients.FirstOrDefault(
+                        item => item.StockType == ingredient.StockType);
 
-                        if (existingIngredient != null)
+                    if (existingIngredient != null)
+                    {
+                        StockDto updatedIngredient = existingIngredient with
                         {
+                            Amount = existingIngredient.Amount + requiredAmount
+                        };
 
-                            StockDto updatedIngredient = existingIngredient with
-                            {
-                                Amount = existingIngredient.Amount + requiredAmount
-                            };
-
-
-                            for (int i = 0; i < requiredIngredients.Count; i++)
-                            {
-                                if (requiredIngredients[i].StockType == ingredient.StockType)
-                                {
-                                    requiredIngredients[i] = updatedIngredient;
-                                    break;
-                                }
-                            }
-                        }
+                        int index = requiredIngredients.IndexOf(existingIngredient);
+                        requiredIngredients[index] = updatedIngredient;
                     }
                 }
             }
