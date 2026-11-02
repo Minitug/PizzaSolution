@@ -12,7 +12,7 @@ public class GiantRevolvingPizzaOven(TimeProvider timeProvider) : PizzaOven(time
 
     protected override int Capacity => GiantRevolvingPizzaOvenCapacity;
 
-    protected override void PlanPizzaMaking(
+    protected override async void PlanPizzaMaking(
     IEnumerable<(PizzaRecipeDto Recipe, Guid Guid)> recipeOrders)
     {
         var batches = recipeOrders
@@ -32,17 +32,11 @@ public class GiantRevolvingPizzaOven(TimeProvider timeProvider) : PizzaOven(time
 
             foreach (var (recipe, orderGuid) in batch)
             {
-                _pizzaQueue.Enqueue((
-                    async () =>
-                    {
-                        cookingTask ??= CookBatch();
-
-                        await cookingTask;
-                        return GetPizza(recipe.RecipeType);
-                    },
-                    orderGuid
-                ));
+                _pizzaQueue.Enqueue((MakePizza(recipe), orderGuid));
+                cookingTask = CookBatch();
             }
+
+            if (batch.Count() != Capacity) await cookingTask;
 
             previousBatch = batchCompletion.Task;
 
@@ -54,4 +48,11 @@ public class GiantRevolvingPizzaOven(TimeProvider timeProvider) : PizzaOven(time
             }
         }
     }
+
+    private Func<Task<Pizza?>> MakePizza(PizzaRecipeDto recipe) => async () =>
+    {
+        await CookPizza(recipe.CookingTimeMinutes);
+
+        return GetPizza(recipe.RecipeType);
+    };
 }
