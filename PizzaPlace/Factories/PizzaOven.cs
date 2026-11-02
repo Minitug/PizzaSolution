@@ -71,7 +71,15 @@ public abstract class PizzaOven(TimeProvider timeProvider) : IPizzaOven
     private async Task<(Pizza?, Guid)> GetNextReadyPizza()
     {
         AddPizzaTasks();
+
+        //Console.WriteLine(
+        //    $"Waiting for pizza. In oven: {_pizzasInOven.Count}, " +
+        //    $"Queued: {_pizzaQueue.Count}");
+
         var donePizza = await Task.WhenAny(_pizzasInOven.Values);
+
+        //Console.WriteLine("Pizza task completed.");
+
         return await donePizza;
     }
 
