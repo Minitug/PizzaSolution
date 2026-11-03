@@ -3,14 +3,29 @@ using PizzaPlace.Models;
 using PizzaPlace.Models.Types;
 using PizzaPlace.Pizzas;
 using PizzaPlace.Services;
+using Moq;
+using PizzaPlace.Repositories;
 
 namespace PizzaPlace.Test.Services;
 
 [TestClass]
 public class OrderingServiceTests
 {
-    private static OrderingService GetService(IStockService stockService, IRecipeService recipeService, IPizzaOven pizzaOven) =>
-        new OrderingService(stockService, recipeService, pizzaOven);
+    private static OrderingService GetService(
+    IStockService stockService,
+    IRecipeService recipeService,
+    IPizzaOven pizzaOven)
+    {
+        var orderRepository = new Mock<IOrderRepository>();
+        var orderQueue = new OrderQueue();
+
+        return new OrderingService(
+            stockService,
+            recipeService,
+            pizzaOven,
+            orderRepository.Object,
+            orderQueue);
+    }
 
     [TestMethod]
     public async Task HandlePizzaOrder()

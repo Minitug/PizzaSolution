@@ -16,11 +16,21 @@ public class OrderingControllerTests
     public async Task PlacePizzaOrder()
     {
         // Arrange
-        var order = new PizzaOrder([new PizzaAmount(PizzaRecipeType.EmptyPizza, 1)]);
+        var order = new PizzaOrder([
+            new PizzaAmount(PizzaRecipeType.EmptyPizza, 1)
+        ]);
+
+        var expected = new OrderDto(
+            Guid.NewGuid(),
+            "Queued",
+            75m,
+            10
+        );
 
         var orderingService = new Mock<IOrderingService>(MockBehavior.Strict);
-        orderingService.Setup(x => x.HandlePizzaOrder(order))
-            .ReturnsAsync([]); // Doesn't matter.
+
+        orderingService.Setup(x => x.SubmitPizzaOrder(order))
+            .ReturnsAsync(expected);
 
         var controller = GetController(orderingService);
 
@@ -28,7 +38,13 @@ public class OrderingControllerTests
         var actual = await controller.PlacePizzaOrder(order);
 
         // Assert
-        Assert.IsInstanceOfType<OkObjectResult>(actual);
+        Assert.IsInstanceOfType<AcceptedAtActionResult>(actual);
+
+        var result = (AcceptedAtActionResult)actual;
+
+        Assert.AreEqual(expected, result.Value);
+        Assert.AreEqual(nameof(OrderingController.GetOrderStatus), result.ActionName);
+
         orderingService.VerifyAll();
     }
 }
