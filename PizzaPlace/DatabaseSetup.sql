@@ -1,21 +1,24 @@
+USE master;
+GO
 
+IF DB_ID(N'PizzaPlace') IS NULL
+    CREATE DATABASE PizzaPlace;
+GO
 
+USE PizzaPlace;
+GO
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Recipes]') AND type in (N'U'))
+IF OBJECT_ID(N'dbo.Recipes', N'U') IS NULL
 BEGIN
     CREATE TABLE Recipes
     (
         Id BIGINT IDENTITY(1,1) PRIMARY KEY,
-        RecipeType INT NOT NULL,
+        RecipeType INT NOT NULL UNIQUE,
         CookingTimeMinutes INT NOT NULL
     );
-
-    
-    ALTER TABLE Recipes
-    ADD CONSTRAINT UQ_Recipes_RecipeType UNIQUE (RecipeType);
 END
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Stock]') AND type in (N'U'))
+IF OBJECT_ID(N'dbo.Stock', N'U') IS NULL
 BEGIN
     CREATE TABLE Stock
     (
@@ -25,7 +28,7 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RecipeIngredients]') AND type in (N'U'))
+IF OBJECT_ID(N'dbo.RecipeIngredients', N'U') IS NULL
 BEGIN
     CREATE TABLE RecipeIngredients
     (
@@ -41,4 +44,17 @@ BEGIN
             REFERENCES Recipes(Id)
             ON DELETE CASCADE
     )
+END
+
+IF OBJECT_ID(N'dbo.Orders', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Orders
+    (
+        Id UNIQUEIDENTIFIER PRIMARY KEY,
+        Status NVARCHAR(20) NOT NULL,
+        TotalCost DECIMAL(10, 2) NOT NULL,
+        EstimatedMinutes INT NOT NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        CompletedAt DATETIME2 NULL
+    );
 END
